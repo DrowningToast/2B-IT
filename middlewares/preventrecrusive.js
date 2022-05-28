@@ -8,12 +8,9 @@ const preventRecrusive = (msg) => {
   return new Promise((resolve, reject) => {
     if (
       msg.member.roles.cache.some((role) => {
-        console.log(role.id);
-        console.log(ANDROID);
         return role.id === ANDROID;
       })
     ) {
-      console.log("The sender is a bot");
       reject({
         type: "recrusion",
         msg: "the sender is the bot",

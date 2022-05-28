@@ -1,10 +1,11 @@
-const { Message } = require("discord.js");
-const channels = require("../utils/channels");
+const { Message, Client } = require("discord.js");
+const channels = require("../../utils/channels");
 
 /**
+ * @param {Client} client
  * @param {Message} msg
  */
-const verify = (msg) => {
+const verify = (client, msg) => {
   return new Promise((resolve, reject) => {
     if (msg.channelId === channels["moderator-only"]) {
       setTimeout(() => {
