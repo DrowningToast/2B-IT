@@ -43,6 +43,7 @@ connectDiscord()
     console.log("Discord Bot Started.");
   })
   .catch((err) => {
+    console.log(err);
     console.log(`An error has occured while trying to start the discord bot.`);
   });
 

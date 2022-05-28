@@ -1,18 +1,31 @@
+// const { CommandInteraction } = require("discord.js/typings/index");
 const { Message, Client } = require("discord.js");
+const User = require("../../schema/User");
 const channels = require("../../utils/channels");
 
 /**
  * @param {Client} client
- * @param {Message} msg
+ * @param {CommandInteraction} interaction
  */
-const verify = (client, msg) => {
-  return new Promise((resolve, reject) => {
-    if (msg.channelId === channels["moderator-only"]) {
-      setTimeout(() => {
-        resolve("Succesfully verified <3");
-      }, 1500);
+const verify = (client, interaction) => {
+  return new Promise(async (resolve, reject) => {
+    const user = await User.findOne({
+      linkToken: interaction.options.getString("token"),
+      discordUserId: null,
+    });
+    if (user) {
+      await User.findOneAndUpdate(
+        {
+          linkToken: interaction.options.getString("token"),
+          discordUserId: null,
+        },
+        {
+          discordUserId: interaction.member.id,
+        }
+      );
+      resolve(user);
     } else {
-      reject("Wrong channel id");
+      reject("User not found");
     }
   });
 };

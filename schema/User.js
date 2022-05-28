@@ -7,6 +7,7 @@ const UserSchema = mongoose.Schema({
   },
   discordUserId: {
     type: String,
+    default: null,
   },
   uid: {
     type: String,

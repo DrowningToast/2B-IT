@@ -21,7 +21,7 @@ userRouter.get("/token/new", async (req, res) => {
       },
       {
         linkToken: newToken,
-        discordUserId: "",
+        discordUserId: null,
       }
     );
     res.send(newToken);
@@ -51,7 +51,7 @@ userRouter.get("/token", async (req, res) => {
         },
         {
           linkToken: newToken,
-          discordUserId: "",
+          discordUserId: null,
         }
       );
     }
@@ -142,7 +142,7 @@ userRouter.patch("/", async (req, res) => {
     delete data.email;
     delete data.discordUserId;
     if (!user) return res.status(400).send("The user doesn't exist in the DB");
-    const response = await User.updateOne(
+    const response = await User.findOneAndUpdate(
       {
         email: req.currentUser.email,
       },
