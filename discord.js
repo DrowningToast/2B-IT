@@ -11,11 +11,18 @@ const {
   onRecrusive,
 } = require("./middlewares/preventrecrusive");
 const verify = require("./routes/discord/verification");
+const { ONLINE_CAMPER } = require("./utils/roles");
+const channels = require("./utils/channels");
+const wait = require("node:timers/promises").setTimeout;
 
 // Instantiate a new client with some necessary parameters.
 const client = new Client({
   partials: ["MESSAGE", "REACTION"],
-  intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES],
+  intents: [
+    Intents.FLAGS.GUILDS,
+    Intents.FLAGS.GUILD_MESSAGES,
+    Intents.FLAGS.GUILD_MEMBERS,
+  ],
 });
 
 const connectDiscord = () => {
@@ -32,11 +39,27 @@ const connectDiscord = () => {
     const commands = [
       new SlashCommandBuilder()
         .setName("verify")
-        .setDescription("Link your Discord with a Google account")
-        .addStringOption((option) => {
+        .setDescription(
+          "Shorthand function for promoting user to ONLINE CAMPER."
+        )
+        .addUserOption((option) => {
           return option
-            .setName("token")
-            .setDescription("Your account link token from the ToBeIT website")
+            .setName("target")
+            .setDescription("The target user being promoted.")
+            .setRequired(true);
+        }),
+      new SlashCommandBuilder()
+        .setName("stats")
+        .setDescription("Check ToBeIT members stats"),
+      new SlashCommandBuilder()
+        .setName("recent")
+        .setDescription(
+          "See the amount of user recently joined the server in the past period of time."
+        )
+        .addIntegerOption((option) => {
+          return option
+            .setName("hours")
+            .setDescription("The amount of hours you want me to look into.")
             .setRequired(true);
         }),
     ].map((command) => command.toJSON());
@@ -63,14 +86,91 @@ const connectDiscord = () => {
       if (commandName === "verify") {
         // Verify the user
         try {
-          const user = await verify(client, interaction);
-          await interaction.reply({
-            content: `Sucessfully linked ${user.email} with this Discord account`,
+          const user = interaction.options.getUser("target");
+          const guild = client.guilds.cache.get(process.env.tobeit_id);
+          const member = guild.members.cache.get(user.id);
+          member.roles.add(
+            guild.roles.cache.find((role) => role.id === ONLINE_CAMPER)
+          );
+          const botLog = guild.channels.cache.get(channels["bot-log"]);
+          botLog.send(
+            `User ${interaction.member.nickname} has promoted ${member.nickname} to ONLINE CAMPER`
+          );
+          interaction.reply({
+            content: "Done. The user has been promoted.",
             ephemeral: true,
           });
         } catch (e) {
           interaction.reply({
-            content: "Link failed. Double check your token",
+            content: "An error has occured, please check log",
+            ephemeral: true,
+          });
+        }
+      } else if (commandName === "stats") {
+        interaction.deferReply({ ephemeral: true });
+        // const server = client.guilds.fetch()
+        const server = client.guilds.cache.get(process.env.tobeit_id);
+        const members = await server.members.fetch();
+        // console.log(members.size);
+
+        let empty_count = 0;
+        let enrolled_count = 0;
+
+        members.forEach((member) => {
+          // Check verify percentage
+          if (member.roles.cache.size === 1) {
+            empty_count++;
+          } else if (
+            member.roles.cache.some((role) => role.id === ONLINE_CAMPER)
+          ) {
+            enrolled_count++;
+          }
+        });
+
+        const total = empty_count + enrolled_count;
+        await wait(2000);
+        interaction.editReply({
+          content: `Total User : ${total}\nVerified : ${enrolled_count}\nPercentage : ${
+            (enrolled_count / total) * 100
+          }%
+          `,
+          ephemeral: true,
+        });
+      } else if (commandName === "recent") {
+        try {
+          interaction.deferReply({
+            ephemeral: true,
+          });
+          let _members = [];
+          const server = client.guilds.cache.get(process.env.tobeit_id);
+          const members = await server.members.fetch();
+          members.forEach((member) => {
+            _members.push(member.joinedTimestamp);
+          });
+
+          const current = new Date().getTime();
+
+          _members = _members.filter((member) => {
+            return (
+              current - member <
+              interaction.options.getInteger("hours") * 3600 * 1000
+            );
+          });
+
+          await wait(2000);
+
+          interaction.editReply({
+            content: `${
+              _members.length
+            } users have joined in the last ${interaction.options.getInteger(
+              "hours"
+            )} hours`,
+            ephemeral: true,
+          });
+        } catch (e) {
+          console.log(e);
+          interaction.editReply({
+            content: "An error has occured, check logs",
             ephemeral: true,
           });
         }

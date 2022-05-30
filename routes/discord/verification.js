@@ -10,8 +10,14 @@ const channels = require("../../utils/channels");
 const verify = (client, interaction) => {
   return new Promise(async (resolve, reject) => {
     const user = await User.findOne({
-      linkToken: interaction.options.getString("token"),
-      discordUserId: null,
+      $and: [
+        {
+          linkToken: interaction.options.getString("token"),
+        },
+        {
+          discordUserId: null,
+        },
+      ],
     });
     if (user) {
       await User.findOneAndUpdate(
