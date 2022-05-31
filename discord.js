@@ -11,7 +11,7 @@ const {
   onRecrusive,
 } = require("./middlewares/preventrecrusive");
 const verify = require("./routes/discord/verification");
-const { ONLINE_CAMPER } = require("./utils/roles");
+const { ONLINE_CAMPER, ADMIN, MODERATOR } = require("./utils/roles");
 const channels = require("./utils/channels");
 const wait = require("node:timers/promises").setTimeout;
 
@@ -62,6 +62,9 @@ const connectDiscord = () => {
             .setDescription("The amount of hours you want me to look into.")
             .setRequired(true);
         }),
+      new SlashCommandBuilder()
+        .setName("history")
+        .setDescription("See the amount of users joined per day back 5 days"),
     ].map((command) => command.toJSON());
 
     const rest = new REST({ version: "9" }).setToken(process.env.DISCORD_TOKEN);
@@ -86,6 +89,15 @@ const connectDiscord = () => {
       if (commandName === "verify") {
         // Verify the user
         try {
+          const hasPerm = interaction.member.roles.cache.some(
+            (role) => role.id === ADMIN || role.id === MODERATOR
+          );
+
+          if (!hasPerm)
+            return interaction.reply({
+              content: "Insufficient Permission",
+            });
+
           const user = interaction.options.getUser("target");
           const guild = client.guilds.cache.get(process.env.tobeit_id);
           const member = guild.members.cache.get(user.id);
@@ -157,7 +169,7 @@ const connectDiscord = () => {
             );
           });
 
-          await wait(2000);
+          await wait(1000);
 
           interaction.editReply({
             content: `${
@@ -174,6 +186,37 @@ const connectDiscord = () => {
             ephemeral: true,
           });
         }
+      } else if (commandName === "history") {
+        interaction.deferReply({
+          ephemeral: true,
+        });
+        let memberTime = [];
+        let _members = [];
+        let history = [];
+        const server = client.guilds.cache.get(process.env.tobeit_id);
+        const members = await server.members.fetch();
+        members.forEach((member) => {
+          memberTime.push(member.joinedTimestamp);
+        });
+
+        const current = new Date().getTime();
+
+        for (let i = 1; i <= 5; i++) {
+          _members = memberTime.filter((member) => {
+            return (
+              current - member < i * 24 * 3600 * 1000 &&
+              current - member > (i - 1) * 24 * 3600 * 1000
+            );
+          });
+          history.push(_members.length);
+        }
+
+        await wait(1000);
+
+        interaction.editReply({
+          content: `Last 24 Hrs : ${history[0]}\nLast 24 - 48 Hrs : ${history[1]}\nLast 48 - 72 Hrs : ${history[2]}\nLast 72 - 96 Hrs : ${history[3]}\nLast 96 - 120 Hrs : ${history[4]}`,
+          ephemeral: true,
+        });
       }
     });
 
