@@ -93,33 +93,51 @@ const connectDiscord = () => {
             (role) => role.id === ADMIN || role.id === MODERATOR
           );
 
+          await interaction.deferReply({
+            content: "Insufficient Permission",
+            ephemeral: true,
+          });
+
           if (!hasPerm)
-            return interaction.reply({
+            return await interaction.reply({
               content: "Insufficient Permission",
             });
 
           const user = interaction.options.getUser("target");
-          const guild = client.guilds.cache.get(process.env.tobeit_id);
-          const member = guild.members.cache.get(user.id);
-          member.roles.add(
+          const guild = await client.guilds.fetch(process.env.tobeit_id);
+          const member = await guild.members.fetch(user.id);
+
+          if (
+            member.roles.cache.some((role) => {
+              return role.id === ONLINE_CAMPER;
+            })
+          )
+            return await interaction.editReply({
+              content: "The target already has the role",
+              ephemeral: true,
+            });
+
+          await member.roles.add(
             guild.roles.cache.find((role) => role.id === ONLINE_CAMPER)
           );
           const botLog = guild.channels.cache.get(channels["bot-log"]);
-          botLog.send(
+          await botLog.send(
             `User ${interaction.member.nickname} has promoted ${member.nickname} to ONLINE CAMPER`
           );
-          interaction.reply({
+          await user.send(`
+            Greeting, my name is 2B. I'm an android from ToBeIT'66 @KMITL. I'm told to inform you that you've been verified and now can access channels. Welcome to ToBeIT'66.\n\nสวัสดี ฉันชื่อ 2B เป็นแอนดรอยด์จาก ToBeIT'66 @KMITL ฉันถูกบอกมาว่าเธอนั้นได้ถูกยืนยันตัวตนเรียบร้อยแล้วและสามารถเข้าถึงแชทต่างๆได้ ยินดีต้อนรับเข้าสู่ ToBeIT666 ค่ะ`);
+          interaction.editReply({
             content: "Done. The user has been promoted.",
             ephemeral: true,
           });
         } catch (e) {
-          interaction.reply({
+          interaction.editReply({
             content: "An error has occured, please check log",
             ephemeral: true,
           });
         }
       } else if (commandName === "stats") {
-        interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ ephemeral: true });
         // const server = client.guilds.fetch()
         const server = client.guilds.cache.get(process.env.tobeit_id);
         const members = await server.members.fetch();
@@ -131,6 +149,9 @@ const connectDiscord = () => {
         members.forEach((member) => {
           // Check verify percentage
           if (member.roles.cache.size === 1) {
+            console.log(
+              `${member.user.username} ${member.nickname} ${member.roles.cache[0]}`
+            );
             empty_count++;
           } else if (
             member.roles.cache.some((role) => role.id === ONLINE_CAMPER)
@@ -141,7 +162,7 @@ const connectDiscord = () => {
 
         const total = empty_count + enrolled_count;
         await wait(2000);
-        interaction.editReply({
+        await interaction.editReply({
           content: `Total User : ${total}\nVerified : ${enrolled_count}\nPercentage : ${
             (enrolled_count / total) * 100
           }%
