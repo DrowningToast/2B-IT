@@ -64,7 +64,7 @@ const connectDiscord = () => {
         }),
       new SlashCommandBuilder()
         .setName("history")
-        .setDescription("See the amount of users joined per day back 5 days"),
+        .setDescription("See the amount of users joined per day back 7 days"),
     ].map((command) => command.toJSON());
 
     const rest = new REST({ version: "9" }).setToken(process.env.DISCORD_TOKEN);
@@ -149,9 +149,6 @@ const connectDiscord = () => {
         members.forEach((member) => {
           // Check verify percentage
           if (member.roles.cache.size === 1) {
-            console.log(
-              `${member.user.username} ${member.nickname} ${member.roles.cache[0]}`
-            );
             empty_count++;
           } else if (
             member.roles.cache.some((role) => role.id === ONLINE_CAMPER)
@@ -208,7 +205,7 @@ const connectDiscord = () => {
           });
         }
       } else if (commandName === "history") {
-        interaction.deferReply({
+        await interaction.deferReply({
           ephemeral: true,
         });
         let memberTime = [];
@@ -220,9 +217,12 @@ const connectDiscord = () => {
           memberTime.push(member.joinedTimestamp);
         });
 
-        const current = new Date().getTime();
+        const currentDate = new Date();
+        currentDate.setDate(new Date().getDate() + 1);
+        currentDate.setUTCHours(-7, 0, 0, 0);
+        const current = currentDate.getTime();
 
-        for (let i = 1; i <= 5; i++) {
+        for (let i = 1; i <= 7; i++) {
           _members = memberTime.filter((member) => {
             return (
               current - member < i * 24 * 3600 * 1000 &&
@@ -234,8 +234,8 @@ const connectDiscord = () => {
 
         await wait(1000);
 
-        interaction.editReply({
-          content: `Last 24 Hrs : ${history[0]}\nLast 24 - 48 Hrs : ${history[1]}\nLast 48 - 72 Hrs : ${history[2]}\nLast 72 - 96 Hrs : ${history[3]}\nLast 96 - 120 Hrs : ${history[4]}`,
+        await interaction.editReply({
+          content: `Today : ${history[0]}\nYesterday : ${history[1]}\nDay before last : ${history[2]}\n2 Days before last : ${history[3]}\n3 Days before last : ${history[4]}\n4 Days before last : ${history[5]}\n5 Days before last : ${history[6]}`,
           ephemeral: true,
         });
       }
