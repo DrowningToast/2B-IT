@@ -125,13 +125,17 @@ const connectDiscord = () => {
             `User ${interaction.member.nickname} has promoted ${member.nickname} to ONLINE CAMPER`
           );
           await user.send(`
-            Greeting, my name is 2B. I'm an android from ToBeIT'66 @KMITL. I'm told to inform you that you've been verified and now can access channels. Welcome to ToBeIT'66.\n\nสวัสดี ฉันชื่อ 2B เป็นแอนดรอยด์จาก ToBeIT'66 @KMITL ฉันถูกบอกมาว่าเธอนั้นได้ถูกยืนยันตัวตนเรียบร้อยแล้วและสามารถเข้าถึงแชทต่างๆได้ ยินดีต้อนรับเข้าสู่ ToBeIT666 ค่ะ`);
-          interaction.editReply({
+          สวัสดีค่ะ ในตอนนี้น้อง ${
+            member.nickname ?? member.user.username
+          } ได้ยืนยันตัวใน Discord : ToBeIT'66 @KMITL สำเร็จแล้ว น้องสามารถเข้ามาพูดคุยกับเพื่อนๆ ได้ในช่องแชทต่างๆ ได้เลย!
+          `);
+          await interaction.editReply({
             content: "Done. The user has been promoted.",
             ephemeral: true,
           });
         } catch (e) {
-          interaction.editReply({
+          console.log(e);
+          await interaction.editReply({
             content: "An error has occured, please check log",
             ephemeral: true,
           });
