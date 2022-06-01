@@ -37,17 +37,17 @@ const connectDiscord = () => {
 
     // Setup commands
     const commands = [
-      // new SlashCommandBuilder()
-      //   .setName("verify")
-      //   .setDescription(
-      //     "Shorthand function for promoting user to ONLINE CAMPER."
-      //   )
-      //   .addUserOption((option) => {
-      //     return option
-      //       .setName("target")
-      //       .setDescription("The target user being promoted.")
-      //       .setRequired(true);
-      //   }),
+      new SlashCommandBuilder()
+        .setName("verify")
+        .setDescription(
+          "Shorthand function for promoting user to ONLINE CAMPER."
+        )
+        .addUserOption((option) => {
+          return option
+            .setName("target")
+            .setDescription("The target user being promoted.")
+            .setRequired(true);
+        }),
       new SlashCommandBuilder()
         .setName("stats")
         .setDescription("Check ToBeIT members stats"),
