@@ -69,6 +69,6 @@ app.post("/", (req, res, next) => {
   );
 });
 
-app.listen(PORT, "0.0.0.0", () => {
+app.listen(PORT, "127.0.0.1", () => {
   console.log(`Server is up and running on port : ${PORT}`);
 });
